@@ -6,35 +6,162 @@
 
     <style>
         body {
-            margin: 0;
-            padding: 0;
+            background: black;
+            color: white;
             font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
+            margin: 0;
+            padding: 20px;
             text-align: center;
-        }
-
-        h1 {
-            margin-top: 30px;
         }
 
         form {
             margin-top: 20px;
         }
 
-        input {
-            width: 300px;
-            padding: 12px;
-            font-size: 16px;
-            background-color: #000;
-            color: #fff;
-            border: 2px solid #fff;
+        input, select, button {
+            padding: 10px;
+            font-size: 15px;
+            margin: 5px;
+            background: black;
+            color: white;
+            border: 1px solid white;
             border-radius: 5px;
-            outline: none;
         }
 
-        input::placeholder {
-            color: #aaa;
+        button {
+            background: #e50914;
+            border: none;
+            cursor: pointer;
+        }
+
+        .results-wrapper {
+            margin-top: 40px;
+            overflow-x: auto;
+        }
+
+        .results {
+            display: flex;
+            gap: 20px;
+            width: max-content;
+            padding-bottom: 20px;
+        }
+
+        .card {
+            width: 280px;
+            background: #111;
+            border-radius: 10px;
+            padding: 15px;
+            flex-shrink: 0;
+        }
+
+        .card img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .info {
+            text-align: left;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .watch-btn {
+            margin-top: 10px;
+            padding: 10px;
+            display: block;
+            text-align: center;
+            background: #1db954;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🎬 Recherche Films & Séries</h1>
+
+    <form id="searchForm">
+        <input type="text" id="query" placeholder="Nom du film ou de la série" required>
+        <input type="number" id="year" placeholder="Année (optionnel)">
+        <select id="type">
+            <option value="multi">Films + Séries</option>
+            <option value="movie">Films</option>
+            <option value="tv">Séries</option>
+        </select>
+        <br>
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <div class="results-wrapper">
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        const API_KEY = "2095fb5e895c5144bb90c4949ff0ea5d";
+        const BASE_URL = "https://api.themoviedb.org/3";
+        const IMG_URL = "https://image.tmdb.org/t/p/w500";
+
+        let database = {};
+
+        fetch("database.json")
+            .then(res => res.json())
+            .then(data => database = data);
+
+        document.getElementById("searchForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const query = document.getElementById("query").value.trim();
+            const year = document.getElementById("year").value;
+            const type = document.getElementById("type").value;
+
+            let url = `${BASE_URL}/search/${type}?api_key=${API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=1`;
+
+            if (year) url += `&year=${year}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            const results = data.results.slice(0, 15);
+
+            const container = document.getElementById("results");
+            container.innerHTML = "";
+
+            if (results.length === 0) {
+                container.innerHTML = "<p>Aucun résultat.</p>";
+                return;
+            }
+
+            results.forEach(item => {
+                const title = item.title || item.name || "Sans titre";
+                const date = item.release_date || item.first_air_date || "Inconnue";
+                const overview = item.overview || "Aucun synopsis.";
+                const poster = item.poster_path ? IMG_URL + item.poster_path : "";
+                const id = item.id;
+                const mediaType = item.media_type || type;
+
+                const watchLink = database[id]?.link;
+
+                container.innerHTML += `
+                    <div class="card">
+                        <h3>${title}</h3>
+                        ${poster ? `<img src="${poster}">` : ""}
+                        <div class="info">
+                            <p><strong>Date :</strong> ${date}</p>
+                            <p><strong>Type :</strong> ${mediaType}</p>
+                            <p><strong>Code TMDB :</strong> ${id}</p>
+                            <p><strong>Synopsis :</strong><br>${overview}</p>
+                            ${watchLink ? `<a class="watch-btn" href="${watchLink}" target="_blank">▶ Voir</a>` : ""}
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    </script>
+
+</body>
+</html>            color: #aaa;
         }
 
         button {
